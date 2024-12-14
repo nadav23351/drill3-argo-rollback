@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app
+  namespace: default
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+        - name: my-app
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          ports:
+            - containerPort: 8080
+      {{- if .Values.healthCheck.enabled }}
+      livenessProbe:
+        httpGet:
+          path: {{ .Values.healthCheck.path }}
+          port: 8080
+        initialDelaySeconds: {{ .Values.healthCheck.initialDelaySeconds }}
+        periodSeconds: {{ .Values.healthCheck.periodSeconds }}
+        failureThreshold: {{ .Values.healthCheck.failureThreshold }}
+        successThreshold: {{ .Values.healthCheck.successThreshold }}
+      {{- end }}
