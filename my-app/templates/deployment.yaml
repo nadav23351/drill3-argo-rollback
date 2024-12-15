@@ -1,30 +1,41 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: my-app
-  namespace: default
+  name: {{ .Release.Name }}-nginx
+  labels:
+    app: {{ .Chart.Name }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: my-app
+      app: {{ .Chart.Name }}
   template:
     metadata:
       labels:
-        app: my-app
+        app: {{ .Chart.Name }}
     spec:
       containers:
-        - name: my-app
-          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
-          ports:
-            - containerPort: 8080
-      {{- if .Values.healthCheck.enabled }}
-      livenessProbe:
-        httpGet:
-          path: {{ .Values.healthCheck.path }}
-          port: 8080
-        initialDelaySeconds: {{ .Values.healthCheck.initialDelaySeconds }}
-        periodSeconds: {{ .Values.healthCheck.periodSeconds }}
-        failureThreshold: {{ .Values.healthCheck.failureThreshold }}
-        successThreshold: {{ .Values.healthCheck.successThreshold }}
-      {{- end }}
+      - name: nginx
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: {{ .Values.resources.limits.cpu }}
+            memory: {{ .Values.resources.limits.memory }}
+          requests:
+            cpu: {{ .Values.resources.requests.cpu }}
+            memory: {{ .Values.resources.requests.memory }}
+        livenessProbe: # בדיקת Liveness
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        readinessProbe: # בדיקת Readiness
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 10
